@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  Author
+  Admin
+}
+
+enum Category {
+  Jazz
+  Classic
+  Pop
+}
+
+model Author {
+  id        Int      @id @default(autoincrement()) // ini yg dapat berlelasi dengan Event bawah
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(Author) // ini untuk ROLE ADMIN / AUTHOR
+  isVerify  Boolean  @default(false) // ini jika belum verifikasi tidak bisa login
+  avatar    String? // OPTIONAL
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Event     Event[]
+  Order     Order[]
+}
+
+model Event {
+  id                     Int      @id @default(autoincrement())
+  title                  String
+  slug                   String
+  category               Category
+  priceInRupiah          Int      @default(0)
+  // availableSeat          Int      @default(0)
+  // isAvailableForPurchase Boolean  @default(true)
+  content                String   @db.LongText
+  image                  String
+  authorId               Int // ini untuk membuat relasi antara Author dan Event.. ini acuan dari author Author
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // ini relation nya didalam 
+  author Author  @relation(fields: [authorId], references: [id])
+  Order  Order[]
+}
+
+model Order {
+  id                Int      @id @default(autoincrement())
+  pricePaidInRupiah Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  authorId          Int
+  eventId           Int
+  author            Author   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
